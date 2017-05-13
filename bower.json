@@ -1,0 +1,17 @@
+{
+  "name": "purescript-textcursor",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-prelude": "^3.0.0",
+    "purescript-newtype": "^2.0.0",
+    "purescript-profunctor-lenses": "^3.2.0",
+    "purescript-dom": "^4.3.1",
+    "purescript-symbols": "^3.0.0"
+  },
+  "devDependencies": {}
+}
