@@ -56,22 +56,15 @@ length :: TextCursor -> Int
 length (TextCursor { before, selected, after }) =
     S.length before + S.length selected + S.length after
 
--- | An empty input field. No selection.
-empty :: TextCursor
-empty = TextCursor { before: "", selected: "", after: "" }
-
 -- | Test whether the content of a `TextCursor` is empty.
 -- check: null textcursor == null (content textcursor)
 null :: TextCursor -> Boolean
 null = testContent { before: Null, selected: Null, after: Null }
 
--- | Test whether the selection is collapsed, i.e. acts like a cursor.
-isCursor :: TextCursor -> Boolean
-isCursor = testContent { before: Any, selected: Null, after: Any }
-
--- | Test whether some text is selected.
-isSelection :: TextCursor -> Boolean
-isSelection = testContent { before: Any, selected: Full, after: Any }
+-- | An empty input field. No selection.
+-- check: null empty
+empty :: TextCursor
+empty = TextCursor { before: "", selected: "", after: "" }
 
 -- | Apply a `Lens` setting a value to an empty `TextCursor`. When used with
 -- | `_before`, `_selected`, or `_after` this will provide a `TextCursor` with
@@ -93,24 +86,41 @@ _selected = _Newtype <<< prop (SProxy :: SProxy "selected")
 _after :: Lens' TextCursor String
 _after = _Newtype <<< prop (SProxy :: SProxy "after")
 
--- | Map all three fields of the `TextCursor` with an endomorphism, performing
--- | a replacement or other transformation such as normalization.
-mapAll :: (String -> String) -> TextCursor -> TextCursor
-mapAll f (TextCursor { before, selected, after }) = TextCursor
-    { before: f before
-    , selected: f selected
-    , after: f after
-    }
+-- | Test whether the cursor or selection touches the start.
+atStart :: TextCursor -> Boolean
+atStart = testContent { before: Null, selected: Null, after: Any }
 
--- | Move the cursor to the start of a field, preserving the overall text
--- | content.
--- Content-preserving idempotent endomorphism
-moveCursorToStart :: TextCursor -> TextCursor
-moveCursorToStart tc = TextCursor
-    { before: ""
-    , selected: ""
-    , after: content tc
-    }
+-- | Test whether the cursor or selection reaches the end.
+atEnd :: TextCursor -> Boolean
+atEnd = testContent { before: Any, selected: Any, after: Null }
+
+-- | Test whether the cursor has selected the whole field.
+allSelected :: TextCursor -> Boolean
+allSelected = testContent { before: Null, selected: Any, after: Null }
+
+-- | Test whether the selection is collapsed, i.e. acts like a cursor.
+isCursor :: TextCursor -> Boolean
+isCursor = testContent { before: Any, selected: Null, after: Any }
+
+-- | Test whether the cursor is at the start with no selection.
+cursorAtStart :: TextCursor -> Boolean
+cursorAtStart = isCursor && atStart
+
+-- | Test whether the cursor is at the end with no selection.
+cursorAtEnd :: TextCursor -> Boolean
+cursorAtEnd = isCursor && atEnd
+
+-- | Test whether some text is selected.
+isSelection :: TextCursor -> Boolean
+isSelection = testContent { before: Any, selected: Full, after: Any }
+
+-- | Test whether there is a selection that ranges to the start.
+selectionAtStart :: TextCursor -> Boolean
+selectionAtStart = isSelection && atStart
+
+-- | Test whether there is a selection that reaches the end.
+selectionAtEnd :: TextCursor -> Boolean
+selectionAtEnd = isSelection && atEnd
 
 -- | Select all of the text in a field.
 -- |
@@ -123,6 +133,16 @@ selectAll tc = TextCursor
     , after: ""
     }
 
+-- | Move the cursor to the start of a field, preserving the overall text
+-- | content.
+-- Content-preserving idempotent endomorphism
+moveCursorToStart :: TextCursor -> TextCursor
+moveCursorToStart tc = TextCursor
+    { before: ""
+    , selected: ""
+    , after: content tc
+    }
+
 -- | Move the cursor to the end of a field, preserving the overall text content.
 -- Content-preserving idempotent endomorphism
 moveCursorToEnd :: TextCursor -> TextCursor
@@ -131,34 +151,6 @@ moveCursorToEnd tc = TextCursor
     , selected: ""
     , after: ""
     }
-
--- | Test whether there is a selection that ranges to the start.
-selectionAtStart :: TextCursor -> Boolean
-selectionAtStart = isSelection && atStart
-
--- | Test whether the cursor is at the start with no selection.
-cursorAtStart :: TextCursor -> Boolean
-cursorAtStart = isCursor && atStart
-
--- | Test whether the cursor or selection touches the start.
-atStart :: TextCursor -> Boolean
-atStart = testContent { before: Null, selected: Null, after: Any }
-
--- | Test whether the cursor has selected the whole field.
-allSelected :: TextCursor -> Boolean
-allSelected = testContent { before: Null, selected: Any, after: Null }
-
--- | Test whether the cursor or selection reaches the end.
-atEnd :: TextCursor -> Boolean
-atEnd = testContent { before: Any, selected: Any, after: Null }
-
--- | Test whether the cursor is at the end with no selection.
-cursorAtEnd :: TextCursor -> Boolean
-cursorAtEnd = isCursor && atEnd
-
--- | Test whether there is a selection that reaches the end.
-selectionAtEnd :: TextCursor -> Boolean
-selectionAtEnd = isSelection && atEnd
 
 -- | Insert a string at the cursor position. If text is selected, the insertion
 -- | will be part of the selection. Otherwise it is inserted before the cursor.
@@ -177,3 +169,12 @@ insert insertion = case _ of
         , selected: selected <> insertion
         , after: after
         }
+
+-- | Map all three fields of the `TextCursor` with an endomorphism, performing
+-- | a replacement or other transformation such as normalization.
+mapAll :: (String -> String) -> TextCursor -> TextCursor
+mapAll f (TextCursor { before, selected, after }) = TextCursor
+    { before: f before
+    , selected: f selected
+    , after: f after
+    }
