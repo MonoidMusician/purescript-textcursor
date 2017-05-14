@@ -1,21 +1,23 @@
 module DOM.Util.TextCursor
     ( TextCursor(..)
     , content, length, null, empty, single
-    , _before, _selected, _after
+    , _before, _selected, _after, _all
     , atStart, atEnd, allSelected
     , isCursor, cursorAtStart, cursorAtEnd
     , isSelection, selectionAtStart, selectionAtEnd
     , selectAll, moveCursorToStart, moveCursorToEnd
-    , insert, mapAll
+    , modifySelected, modifyAll
+    , insert
     ) where
 
 import Prelude
 import Data.String (length, null) as S
 import Data.Symbol (SProxy(..))
 import Data.Newtype (class Newtype)
-import Data.Lens (Lens', (.~))
-import Data.Lens.Record (prop)
+import Data.Lens (Lens', Traversal', over, wander, (.~))
 import Data.Lens.Iso.Newtype (_Newtype)
+import Data.Lens.Record (prop)
+import Data.Lens.Types (Setter')
 
 -- | The `TextCursor` type represents text selection within an input element.
 -- | It consists of three regions of text: the text before the cursor, the text
@@ -28,6 +30,12 @@ newtype TextCursor = TextCursor
     }
 
 derive instance textCursorNewtype :: Newtype TextCursor _
+instance showTextCursor :: Show TextCursor where
+    show = case _ of
+        TextCursor { before, selected: "", after } ->
+            "«" <> before <> "|" <> after <> "»"
+        TextCursor { before, selected, after } ->
+            "«" <> before <> "\27[4m" <> selected <> "\27[24m" <> after <> "»"
 
 data ContentTest = Null | Any | Full
 type ContentPredicate =
@@ -50,13 +58,13 @@ testContent
 content :: TextCursor -> String
 content (TextCursor { before, selected, after }) = before <> selected <> after
 
--- | Get the length of the content of a `TextCursor`.
+-- | Get the content length.
 -- check: length textcursor == length (content textcursor)
 length :: TextCursor -> Int
 length (TextCursor { before, selected, after }) =
     S.length before + S.length selected + S.length after
 
--- | Test whether the content of a `TextCursor` is empty.
+-- | Test whether there is no content.
 -- check: null textcursor == null (content textcursor)
 null :: TextCursor -> Boolean
 null = testContent { before: Null, selected: Null, after: Null }
@@ -66,10 +74,14 @@ null = testContent { before: Null, selected: Null, after: Null }
 empty :: TextCursor
 empty = TextCursor { before: "", selected: "", after: "" }
 
+-- | Create a `TextCursor` from three strings.
+mkTextCursor :: String -> String -> String -> TextCursor
+mkTextCursor before selected after = TextCursor { before, selected, after }
+
 -- | Apply a `Lens` setting a value to an empty `TextCursor`. When used with
 -- | `_before`, `_selected`, or `_after` this will provide a `TextCursor` with
 -- | only one non-empty field.
-single :: Lens' TextCursor String -> String -> TextCursor
+single :: Setter' TextCursor String -> String -> TextCursor
 single l v = l .~ v $ empty
 
 -- | Lens for the text before the selection. Empty if the cursor is at the
@@ -85,6 +97,15 @@ _selected = _Newtype <<< prop (SProxy :: SProxy "selected")
 -- | reaches the end.
 _after :: Lens' TextCursor String
 _after = _Newtype <<< prop (SProxy :: SProxy "after")
+
+-- | Lens for traversing/setting all three fields.
+_all :: Traversal' TextCursor String
+_all = wander trav
+    where
+        -- Monomorphic traverse
+        trav :: forall m. Applicative m => (String -> m String) -> TextCursor -> m TextCursor
+        trav f (TextCursor { before, selected, after }) =
+            mkTextCursor <$> f before <*> f selected <*> f after
 
 -- | Test whether the cursor or selection touches the start.
 atStart :: TextCursor -> Boolean
@@ -114,7 +135,7 @@ cursorAtEnd = isCursor && atEnd
 isSelection :: TextCursor -> Boolean
 isSelection = testContent { before: Any, selected: Full, after: Any }
 
--- | Test whether there is a selection that ranges to the start.
+-- | Test whether there is a selection that starts at the beginning.
 selectionAtStart :: TextCursor -> Boolean
 selectionAtStart = isSelection && atStart
 
@@ -152,6 +173,15 @@ moveCursorToEnd tc = TextCursor
     , after: ""
     }
 
+-- | Modify just the selected region with an endomorphism.
+modifySelected :: (String -> String) -> TextCursor -> TextCursor
+modifySelected = over _selected
+
+-- | Map all three regions of the `TextCursor` with an endomorphism, performing
+-- | a replacement or other transformation such as normalization.
+modifyAll :: (String -> String) -> TextCursor -> TextCursor
+modifyAll = over _all
+
 -- | Insert a string at the cursor position. If text is selected, the insertion
 -- | will be part of the selection. Otherwise it is inserted before the cursor.
 -- check:
@@ -169,12 +199,3 @@ insert insertion = case _ of
         , selected: selected <> insertion
         , after: after
         }
-
--- | Map all three fields of the `TextCursor` with an endomorphism, performing
--- | a replacement or other transformation such as normalization.
-mapAll :: (String -> String) -> TextCursor -> TextCursor
-mapAll f (TextCursor { before, selected, after }) = TextCursor
-    { before: f before
-    , selected: f selected
-    , after: f after
-    }

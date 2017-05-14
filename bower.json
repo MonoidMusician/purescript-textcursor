@@ -13,5 +13,7 @@
     "purescript-dom": "^4.3.1",
     "purescript-symbols": "^3.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "purescript-psci-support": "^3.0.0"
+  }
 }
