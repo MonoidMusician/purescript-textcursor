@@ -6,6 +6,7 @@ module DOM.Util.TextCursor
     , isCursor, cursorAtStart, cursorAtEnd
     , isSelection, selectionAtStart, selectionAtEnd
     , selectAll, moveCursorToStart, moveCursorToEnd
+    , appendLeft, appendRight
     , modifySelected, modifyAll
     , insert
     ) where
@@ -172,6 +173,14 @@ moveCursorToEnd tc = TextCursor
     , selected: ""
     , after: ""
     }
+
+-- | Prepend a string, on the left.
+appendLeft :: String -> TextCursor -> TextCursor
+appendLeft s tc = over _before (s <> _) tc
+
+-- | Append a string, on the right.
+appendRight :: TextCursor -> String -> TextCursor
+appendRight tc s = over _after (_ <> s) tc
 
 -- | Modify just the selected region with an endomorphism.
 modifySelected :: (String -> String) -> TextCursor -> TextCursor
