@@ -12,13 +12,14 @@ module DOM.Util.TextCursor
     ) where
 
 import Prelude
-import Data.String (length, null) as S
-import Data.Symbol (SProxy(..))
-import Data.Newtype (class Newtype)
 import Data.Lens (Lens', Traversal', over, wander, (.~))
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Types (Setter')
+import Data.Newtype (class Newtype)
+import Data.String (length, null) as S
+import Data.Symbol (SProxy(..))
+import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 
 -- | The `TextCursor` type represents text selection within an input element.
 -- | It consists of three regions of text: the text before the cursor, the text
@@ -31,12 +32,24 @@ newtype TextCursor = TextCursor
     }
 
 derive instance textCursorNewtype :: Newtype TextCursor _
+
+instance eqTextCursor :: Eq TextCursor where
+    eq (TextCursor l) (TextCursor r) =
+        l.before == r.before &&
+        l.selected == r.selected &&
+        l.after == r.after
+
 instance showTextCursor :: Show TextCursor where
     show = case _ of
+        TextCursor { before: "", selected: "", after: "" } ->
+            "«»"
         TextCursor { before, selected: "", after } ->
             "«" <> before <> "|" <> after <> "»"
         TextCursor { before, selected, after } ->
             "«" <> before <> "\27[4m" <> selected <> "\27[24m" <> after <> "»"
+
+instance arbitraryTextCursor :: Arbitrary TextCursor where
+    arbitrary = mkTextCursor <$> arbitrary <*> arbitrary <*> arbitrary
 
 data ContentTest = Null | Any | Full
 type ContentPredicate =
