@@ -8,7 +8,6 @@ module DOM.Util.TextCursor.Element
 
 import Prelude
 import Data.Maybe (Maybe(Just))
-import Data.Tuple (Tuple(Tuple))
 import Data.String (length, splitAt)
 import Data.Lens (Lens', (.~))
 import Control.Monad.Eff (Eff)
@@ -34,11 +33,11 @@ import DOM.Util.TextCursor.Element.HTML
 
 -- | Helper to split a `String` at a specific position without worrying about
 -- | `Nothing`.
-splitAtTuple :: Int -> String -> Tuple String String
-splitAtTuple i s = case splitAt i s of
-    Just {before, after} -> Tuple before after
-    _ | i > 0     -> Tuple s ""
-      | otherwise -> Tuple "" s
+splitAtRec :: Int -> String -> { before :: String, after :: String }
+splitAtRec i s = case splitAt i s of
+    Just split    -> split
+    _ | i > 0     -> { before: s, after: "" }
+      | otherwise -> { before: "", after: s }
 
 -- | Get the `TextCursor` from a `TextCursorElement`.
 textCursor :: forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) TextCursor
@@ -46,8 +45,8 @@ textCursor element = do
     val <- value element
     start <- selectionStart element
     end <- selectionEnd element
-    let (Tuple prior after) = splitAtTuple end val
-    let (Tuple before selected) = splitAtTuple start prior
+    let { before: prior, after } = splitAtRec end val
+    let { before, after: selected } = splitAtRec start prior
     pure $ TextCursor
         { before
         , selected

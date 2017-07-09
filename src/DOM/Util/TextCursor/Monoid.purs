@@ -3,7 +3,7 @@ module DOM.Util.TextCursor.Monoid where
 import Prelude
 import DOM.Util.TextCursor
     ( TextCursor, empty
-    , appendLeft, appendRight
+    , appendl, appendr
     , isCursor, content
     )
 import Data.Monoid (class Monoid)
@@ -20,10 +20,10 @@ instance rightmostMonoid :: Monoid Rightmost where mempty = Rightmost empty
 
 instance leftmostSemigroup :: Semigroup Leftmost where
     append (Leftmost l) (Leftmost r)
-        | isCursor l = Leftmost (content l `appendLeft` r)
-        | otherwise  = Leftmost (l `appendRight` content r)
+        | isCursor l = Leftmost (content l `appendl` r)
+        | otherwise  = Leftmost (l `appendr` content r)
 
 instance rightmostSemigroup :: Semigroup Rightmost where
     append (Rightmost l) (Rightmost r)
-        | isCursor r = Rightmost (l `appendRight` content r)
-        | otherwise  = Rightmost (content l `appendLeft` r)
+        | isCursor r = Rightmost (l `appendr` content r)
+        | otherwise  = Rightmost (content l `appendl` r)

@@ -6,9 +6,8 @@ module DOM.Util.TextCursor
     , isCursor, cursorAtStart, cursorAtEnd
     , isSelection, selectionAtStart, selectionAtEnd
     , selectAll, moveCursorToStart, moveCursorToEnd
-    , appendLeft, appendRight
     , modifySelected, modifyAll
-    , insert
+    , appendl, appendr, insert
     ) where
 
 import Prelude
@@ -114,12 +113,8 @@ _after = _Newtype <<< prop (SProxy :: SProxy "after")
 
 -- | Lens for traversing/setting all three fields.
 _all :: Traversal' TextCursor String
-_all = wander trav
-    where
-        -- Monomorphic traverse
-        trav :: forall m. Applicative m => (String -> m String) -> TextCursor -> m TextCursor
-        trav f (TextCursor { before, selected, after }) =
-            mkTextCursor <$> f before <*> f selected <*> f after
+_all = wander \f (TextCursor { before, selected, after }) ->
+    mkTextCursor <$> f before <*> f selected <*> f after
 
 -- | Test whether the cursor or selection touches the start.
 atStart :: TextCursor -> Boolean
@@ -187,14 +182,6 @@ moveCursorToEnd tc = TextCursor
     , after: ""
     }
 
--- | Prepend a string, on the left.
-appendLeft :: String -> TextCursor -> TextCursor
-appendLeft s tc = over _before (s <> _) tc
-
--- | Append a string, on the right.
-appendRight :: TextCursor -> String -> TextCursor
-appendRight tc s = over _after (_ <> s) tc
-
 -- | Modify just the selected region with an endomorphism.
 modifySelected :: (String -> String) -> TextCursor -> TextCursor
 modifySelected = over _selected
@@ -204,8 +191,17 @@ modifySelected = over _selected
 modifyAll :: (String -> String) -> TextCursor -> TextCursor
 modifyAll = over _all
 
+-- | Prepend a string, on the left.
+appendl :: String -> TextCursor -> TextCursor
+appendl s tc = over _before (s <> _) tc
+
+-- | Append a string, on the right.
+appendr :: TextCursor -> String -> TextCursor
+appendr tc s = over _after (_ <> s) tc
+
 -- | Insert a string at the cursor position. If text is selected, the insertion
 -- | will be part of the selection. Otherwise it is inserted before the cursor.
+-- Preserves normalization
 -- check:
 --     length (insert insertion textcursor)
 --  == length insertion + length textcursor
