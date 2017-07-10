@@ -1,11 +1,13 @@
 module DOM.Util.TextCursor.Test.Properties where
 
 import DOM.Util.TextCursor
-import Data.String as S
+
 import Data.Array (concat)
+import Data.String as S
 import Data.Traversable (for_)
-import Prelude (Unit, discard, flip, (+), (<#>))
-import Test.QuickCheck (QC, Result, quickCheck, (<?>), (===))
+import Prelude (Unit, discard, flip, map, ($), (+), (<#>), (<$>), (<*>), (>>=), (>>>))
+import Test.QuickCheck (QC, Result, arbitrary, quickCheck, (<?>), (===))
+import Test.QuickCheck.Gen (Gen)
 
 type Testing = Array (TextCursor -> Result)
 
@@ -35,13 +37,20 @@ test_contentGeneration = cases <#> prop where
 
 test_concat :: Array (String -> TextCursor -> Result)
 test_concat = cases <#> prop where
-    cases = [appendLeft, flip appendRight, insert]
+    cases = [appendl, flip appendr, insert]
     prop fn s tc = length (fn s tc) === length tc + S.length s
+
+testTCG :: (TextCursor -> Result) -> Gen Result
+testTCG f = map f genTextCursor
+
+testTC :: (TextCursor -> Result) -> QC () Unit
+testTC = testTCG >>> quickCheck
 
 main :: QC () Unit
 main = do
     let tests = concat [test_idempotent, test_contentPreserving, test_resultPred]
-    for_ tests quickCheck
+    for_ tests testTC
     for_ test_contentGeneration quickCheck
-    for_ test_concat quickCheck
-    quickCheck (\tc -> length tc === S.length (content tc))
+    for_ test_concat \stcr -> quickCheck $
+      stcr <$> arbitrary >>= testTCG
+    quickCheck (testTCG \tc -> length tc === S.length (content tc))

@@ -1,5 +1,6 @@
 module DOM.Util.TextCursor
     ( TextCursor(..)
+    , mkTextCursor, genTextCursor
     , content, length, null, empty, single
     , _before, _selected, _after, _all
     , atStart, atEnd, allSelected
@@ -11,14 +12,17 @@ module DOM.Util.TextCursor
     ) where
 
 import Prelude
+
+import Control.Monad.Gen (class MonadGen)
+import Control.Monad.Rec.Class (class MonadRec)
 import Data.Lens (Lens', Traversal', over, wander, (.~))
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Types (Setter')
 import Data.Newtype (class Newtype)
 import Data.String (length, null) as S
+import Data.String.Gen (genUnicodeString)
 import Data.Symbol (SProxy(..))
-import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 
 -- | The `TextCursor` type represents text selection within an input element.
 -- | It consists of three regions of text: the text before the cursor, the text
@@ -47,8 +51,12 @@ instance showTextCursor :: Show TextCursor where
         TextCursor { before, selected, after } ->
             "«" <> before <> "\27[4m" <> selected <> "\27[24m" <> after <> "»"
 
-instance arbitraryTextCursor :: Arbitrary TextCursor where
-    arbitrary = mkTextCursor <$> arbitrary <*> arbitrary <*> arbitrary
+genTextCursor :: forall m. MonadRec m => MonadGen m => m TextCursor
+genTextCursor =
+  mkTextCursor
+  <$> genUnicodeString
+  <*> genUnicodeString
+  <*> genUnicodeString
 
 data ContentTest = Null | Any | Full
 type ContentPredicate =
