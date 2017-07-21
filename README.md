@@ -11,7 +11,7 @@ newtype TextCursor = TextCursor
   { before :: String
   , selected :: String
   , after :: String
-  , direction :: Direction -- Forward | None | Backward
+  , direction :: Direction -- Backward | None | Forward
   }
 ```
 
@@ -41,7 +41,7 @@ q2 = q <> q
 qq = "\""
 replaceQuote = replaceAll (wrap q2) (wrap qq)
 replaceLast s =
-  case stripSuffix (wrap q) of
+  case stripSuffix (wrap q) s of
     Nothing -> s
     Just s' -> s' <> qq
 -- left biased for quotes matched across an edge
@@ -53,28 +53,28 @@ stitch left right
 replaceAcross left right =
   stitch (replaceQuote left) right
     <#> replaceQuote
-replaceQuotes = case _ of
-  TextCursor { before, selected: "", after, direction } ->
-    let
-      Tuple before' after' =
-        replaceAcross before after
-    in TextCursor
-      { before: before'
-      , selected: ""
-      , after: after'
+replaceQuotes tc =
+  let
+    TextCursor
+      { before
+      , selected
+      , after
       , direction
-      }
-  TextCursor { before, selected, after, direction } ->
-    let
-      Tuple before' (Tuple selected' after') =
-        replaceAcross before selected
-          <#> flip replaceAcross after
-    in TextCursor
-      { before: before'
-      , selected: selected'
-      , after: after'
-      , direction
-      }
+      } = tc
+    Tuple before'
+      (Tuple selected' after') =
+        if selected == "" then
+          replaceAcross before after
+            <#> Tuple ""
+        else
+          replaceAcross before selected
+            <#> flip replaceAcross after
+  in TextCursor
+    { before: before'
+    , selected: selected'
+    , after: after'
+    , direction
+    }
 ```
 
 ## Supported DOM elements
