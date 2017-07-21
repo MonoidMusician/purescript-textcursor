@@ -5,7 +5,7 @@ import DOM.Util.TextCursor
 import Data.Array (concat)
 import Data.String as S
 import Data.Traversable (for_)
-import Prelude (Unit, discard, flip, map, ($), (+), (<#>), (<$>), (<*>), (>>=), (>>>))
+import Prelude (Unit, discard, flip, map, ($), (+), (<#>), (<$>), (>>=), (>>>))
 import Test.QuickCheck (QC, Result, arbitrary, quickCheck, (<?>), (===))
 import Test.QuickCheck.Gen (Gen)
 
