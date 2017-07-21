@@ -1,11 +1,11 @@
 module DOM.Util.TextCursor.Element.Type
-    ( TextCursorElement(..)
-    , htmlTextCursorElementToHTMLElement
-    , read, read', readEventTarget
-    , validate, validate'
-    , lookupAndValidate
-    , lookupValidateAndDo
-    ) where
+  ( TextCursorElement(..)
+  , htmlTextCursorElementToHTMLElement
+  , read, read', readEventTarget
+  , validate, validate'
+  , lookupAndValidate
+  , lookupValidateAndDo
+  ) where
 
 import Prelude (Unit, bind, map, pure, (<$>), (<#>), (<<<), (>>=))
 import Data.Maybe (Maybe(..), maybe)
@@ -19,13 +19,13 @@ import Control.Monad.Eff (Eff)
 import DOM (DOM)
 import DOM.Event.Event (Event, target)
 import DOM.HTML.Types
-    ( HTMLElement, HTMLInputElement, HTMLTextAreaElement
-    , htmlDocumentToNonElementParentNode
-    , htmlInputElementToHTMLElement
-    , htmlTextAreaElementToHTMLElement
-    , readHTMLInputElement
-    , readHTMLTextAreaElement
-    )
+  ( HTMLElement, HTMLInputElement, HTMLTextAreaElement
+  , htmlDocumentToNonElementParentNode
+  , htmlInputElementToHTMLElement
+  , htmlTextAreaElementToHTMLElement
+  , readHTMLInputElement
+  , readHTMLTextAreaElement
+  )
 import DOM.HTML (window)
 import DOM.HTML.Window (document)
 import DOM.HTML.HTMLInputElement (type_)
@@ -51,10 +51,10 @@ htmlTextCursorElementToHTMLElement (TextArea e) = htmlTextAreaElementToHTMLEleme
 -- | Read a `TextCursorElement` from a `Foreign` type.
 read' :: Foreign -> F TextCursorElement
 read' e = ta <|> i
-    where
-        -- prefer TextArea, which needs no validation
-        ta = TextArea <$> readHTMLTextAreaElement e
-        i = Input <$> readHTMLInputElement e
+  where
+    -- prefer TextArea, which needs no validation
+    ta = TextArea <$> readHTMLTextAreaElement e
+    i = Input <$> readHTMLInputElement e
 
 read :: Element -> F TextCursorElement
 read = read' <<< toForeign
@@ -71,34 +71,34 @@ readEventTarget = read' <<< toForeign <<< target
 -- | - url
 validate :: forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) (Maybe TextCursorElement)
 validate = case _ of
-    tae@(TextArea e) -> pure (Just tae)
-    Input e -> map Input <$> validateInput e
-    where
-        validateInput :: HTMLInputElement -> Eff ( dom :: DOM | eff ) (Maybe HTMLInputElement)
-        validateInput e = do
-            inputtype <- type_ e
-            pure if elem inputtype whitelist
-                then Just e
-                else Nothing
-            where
-                whitelist = ["", "text", "email", "search", "url"]
+  tae@(TextArea e) -> pure (Just tae)
+  Input e -> map Input <$> validateInput e
+  where
+    validateInput :: HTMLInputElement -> Eff ( dom :: DOM | eff ) (Maybe HTMLInputElement)
+    validateInput e = do
+      inputtype <- type_ e
+      pure if elem inputtype whitelist
+        then Just e
+        else Nothing
+      where
+        whitelist = ["", "text", "email", "search", "url"]
 
 -- | Convert from a `Foreign` error computation (type `F`) to a validated
 -- | `TextCursorElement`.
 validate' :: forall eff. F TextCursorElement -> Eff ( dom :: DOM | eff ) (Maybe TextCursorElement)
 validate' f =
-    case runExcept f of
-        Left _ -> pure Nothing
-        Right e -> validate e
+  case runExcept f of
+    Left _ -> pure Nothing
+    Right e -> validate e
 
 -- | Look up a `TextCursorElement` in the document by id.
 lookupAndValidate :: forall eff. ElementId -> Eff ( dom :: DOM | eff ) (Maybe TextCursorElement)
 lookupAndValidate name = do
-    win <- window
-    doc <- htmlDocumentToNonElementParentNode <$> document win
-    getElementById name doc <#> map read >>= maybe (pure Nothing) validate'
+  win <- window
+  doc <- htmlDocumentToNonElementParentNode <$> document win
+  getElementById name doc <#> map read >>= maybe (pure Nothing) validate'
 
 -- | Look up a `TextCursorElement` by id and run an action if found.
 lookupValidateAndDo :: forall eff. ElementId -> (TextCursorElement -> Eff ( dom :: DOM | eff ) Unit) -> Eff ( dom :: DOM | eff ) Unit
 lookupValidateAndDo name action =
-    lookupAndValidate name >>= traverse_ action
+  lookupAndValidate name >>= traverse_ action

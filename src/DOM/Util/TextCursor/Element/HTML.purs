@@ -1,9 +1,9 @@
 module DOM.Util.TextCursor.Element.HTML
-    ( value, setValue
-    , selectionStart, setSelectionStart
-    , selectionEnd, setSelectionEnd
-    , selectionDirection, setSelectionDirection
-    ) where
+  ( value, setValue
+  , selectionStart, setSelectionStart
+  , selectionEnd, setSelectionEnd
+  , selectionDirection, setSelectionDirection
+  ) where
 
 import Prelude
 
@@ -21,20 +21,20 @@ type Setter a =
   forall eff. a -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
 
 -- | Lift a pair of getters (Input/TextArea).
-getter
-    :: forall a.
-    (HTMLInputElement -> a) ->
-    (HTMLTextAreaElement -> a) ->
-    TextCursorElement -> a
+getter ::
+  forall a.
+  (HTMLInputElement -> a) ->
+  (HTMLTextAreaElement -> a) ->
+  TextCursorElement -> a
 getter f _ (Input e) = f e
 getter _ g (TextArea e) = g e
 
 -- | Lift a pair of setters (Input/TextArea).
-setter
-    :: forall a b.
-    (b -> HTMLInputElement -> a) ->
-    (b -> HTMLTextAreaElement -> a) ->
-    b -> TextCursorElement -> a
+setter ::
+  forall a b.
+  (b -> HTMLInputElement -> a) ->
+  (b -> HTMLTextAreaElement -> a) ->
+  b -> TextCursorElement -> a
 setter f _ v (Input e) = f v e
 setter _ g v (TextArea e) = g v e
 
