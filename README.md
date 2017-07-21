@@ -8,10 +8,11 @@ In the DOM, selections within input elements are represented by a starting and e
 A `TextCursor` is defined as the following type:
 ```purescript
 newtype TextCursor = TextCursor
-    { before :: String
-    , selected :: String
-    , after :: String
-    }
+  { before :: String
+  , selected :: String
+  , after :: String
+  , direction :: Direction -- Forward | None | Backward
+  }
 ```
 
 It represents a selection in an element in three regions: the text `before` the cursor/selection, the text inside the `selection` (empty if there is just a cursor), and the text `after`.
@@ -26,6 +27,7 @@ tc = TextCursor
   { before: "Hello, "
   , selected: "World"
   , after: "! Hi!"
+  , direction: Forward
   }
 tcreplaced = modifyAll replacement tc
 content tcreplaced == replacement (content tc)
@@ -52,7 +54,7 @@ replaceAcross left right =
   stitch (replaceQuote left) right
     <#> replaceQuote
 replaceQuotes = case _ of
-  TextCursor { before, selected: "", after } ->
+  TextCursor { before, selected: "", after, direction } ->
     let
       Tuple before' after' =
         replaceAcross before after
@@ -60,8 +62,9 @@ replaceQuotes = case _ of
       { before: before'
       , selected: ""
       , after: after'
+      , direction
       }
-  TextCursor { before, selected, after } ->
+  TextCursor { before, selected, after, direction } ->
     let
       Tuple before' (Tuple selected' after') =
         replaceAcross before selected
@@ -70,6 +73,7 @@ replaceQuotes = case _ of
       { before: before'
       , selected: selected'
       , after: after'
+      , direction
       }
 ```
 

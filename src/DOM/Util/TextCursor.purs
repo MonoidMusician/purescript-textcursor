@@ -1,5 +1,5 @@
 module DOM.Util.TextCursor
-    ( TextCursor(..)
+    ( TextCursor(..), Direction(..)
     , mkTextCursor, genTextCursor
     , content, length, null, empty, single
     , _before, _selected, _after, _all, _nonselected
@@ -15,14 +15,32 @@ import Prelude
 
 import Control.Monad.Gen (class MonadGen)
 import Control.Monad.Rec.Class (class MonadRec)
-import Data.Lens (Lens', Traversal', over, wander, (.~))
+import Data.Lens (Lens', Traversal', over, wander, (.~), (^.))
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Types (Setter')
+import Data.Monoid (class Monoid)
 import Data.Newtype (class Newtype)
 import Data.String (length, null) as S
 import Data.String.Gen (genUnicodeString)
 import Data.Symbol (SProxy(..))
+
+-- | Direction ADT. None is the default. See
+-- | https://www.w3.org/TR/html5/forms.html#dom-textarea/input-selectiondirection
+data Direction = Backward | None | Forward
+derive instance eqDirection :: Eq Direction
+derive instance ordDirection :: Ord Direction
+
+instance semigroupDirection :: Semigroup Direction where
+  append None = id
+  append c = const c
+instance monoidDirection :: Monoid Direction where
+  mempty = None
+
+instance showDirection :: Show Direction where
+  show Forward = "forward"
+  show None = "none"
+  show Backward = "backward"
 
 -- | The `TextCursor` type represents text selection within an input element.
 -- | It consists of three regions of text: the text before the cursor, the text
@@ -32,6 +50,7 @@ newtype TextCursor = TextCursor
     { before :: String
     , selected :: String
     , after :: String
+    , direction :: Direction
     }
 
 derive instance textCursorNewtype :: Newtype TextCursor _
@@ -40,7 +59,8 @@ instance eqTextCursor :: Eq TextCursor where
     eq (TextCursor l) (TextCursor r) =
         l.before == r.before &&
         l.selected == r.selected &&
-        l.after == r.after
+        l.after == r.after &&
+        r.direction == r.direction
 
 instance showTextCursor :: Show TextCursor where
     show = case _ of
@@ -93,11 +113,16 @@ null = testContent { before: Null, selected: Null, after: Null }
 -- | An empty input field. No selection.
 -- check: null empty
 empty :: TextCursor
-empty = TextCursor { before: "", selected: "", after: "" }
+empty = TextCursor { before: "", selected: "", after: "", direction: None }
 
 -- | Create a `TextCursor` from three strings.
 mkTextCursor :: String -> String -> String -> TextCursor
-mkTextCursor before selected after = TextCursor { before, selected, after }
+mkTextCursor before selected after = TextCursor
+  { before
+  , selected
+  , after
+  , direction: None
+  }
 
 -- | Apply a `Lens` setting a value to an empty `TextCursor`. When used with
 -- | `_before`, `_selected`, or `_after` this will provide a `TextCursor` with
@@ -118,6 +143,10 @@ _selected = _Newtype <<< prop (SProxy :: SProxy "selected")
 -- | reaches the end.
 _after :: Lens' TextCursor String
 _after = _Newtype <<< prop (SProxy :: SProxy "after")
+
+-- | Lens for the direction of selection.
+_direction :: Lens' TextCursor Direction
+_direction = _Newtype <<< prop (SProxy :: SProxy "direction")
 
 -- | Lens for traversing/setting all three fields.
 _all :: Traversal' TextCursor String
@@ -173,6 +202,7 @@ selectAll tc = TextCursor
     { before: ""
     , selected: content tc
     , after: ""
+    , direction: tc ^. _direction
     }
 
 -- | Place the cursor to the start of a field, preserving the overall text
@@ -183,6 +213,7 @@ placeCursorAtStart tc = TextCursor
     { before: ""
     , selected: ""
     , after: content tc
+    , direction: tc ^. _direction
     }
 
 -- | Place the cursor to the end of a field, preserving the overall text
@@ -193,6 +224,7 @@ placeCursorAtEnd tc = TextCursor
     { before: content tc
     , selected: ""
     , after: ""
+    , direction: tc ^. _direction
     }
 
 -- | Modify just the selected region with an endomorphism.
@@ -224,13 +256,7 @@ appendr tc s = over _after (_ <> s) tc
 --  == length insertion + length textcursor
 insert :: String -> TextCursor -> TextCursor
 insert insertion = case _ of
-    TextCursor { before, selected: "", after } -> TextCursor
-        { before: before <> insertion
-        , selected: ""
-        , after: after
-        }
-    TextCursor { before, selected, after } -> TextCursor
-        { before: before
-        , selected: selected <> insertion
-        , after: after
-        }
+    tc@(TextCursor { selected: "" }) ->
+      over _before (\before -> before <> insertion) tc
+    tc ->
+      over _selected (\selected -> selected <> insertion) tc

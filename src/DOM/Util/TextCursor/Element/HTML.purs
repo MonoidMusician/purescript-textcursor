@@ -2,15 +2,23 @@ module DOM.Util.TextCursor.Element.HTML
     ( value, setValue
     , selectionStart, setSelectionStart
     , selectionEnd, setSelectionEnd
+    , selectionDirection, setSelectionDirection
     ) where
 
 import Prelude
-import DOM.Util.TextCursor.Element.Type (TextCursorElement(TextArea, Input))
+
 import Control.Monad.Eff (Eff)
 import DOM (DOM)
-import DOM.HTML.Types (HTMLInputElement, HTMLTextAreaElement)
 import DOM.HTML.HTMLInputElement as HInput
 import DOM.HTML.HTMLTextAreaElement as HTextArea
+import DOM.HTML.Types (HTMLInputElement, HTMLTextAreaElement)
+import DOM.Util.TextCursor (Direction(..))
+import DOM.Util.TextCursor.Element.Type (TextCursorElement(TextArea, Input))
+
+type Getter a =
+  forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) a
+type Setter a =
+  forall eff. a -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
 
 -- | Lift a pair of getters (Input/TextArea).
 getter
@@ -31,25 +39,39 @@ setter f _ v (Input e) = f v e
 setter _ g v (TextArea e) = g v e
 
 -- | Get the current text value of a `TextCursorElement`.
-value :: forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) String
+value :: Getter String
 value = getter HInput.value HTextArea.value
 
 -- | Set the text value of a `TextCursorElement` to the specified string.
-setValue :: forall eff. String -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
+setValue :: Setter String
 setValue = setter HInput.setValue HTextArea.setValue
 
 -- | Get the index of the start of the selection.
-selectionStart :: forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) Int
+selectionStart :: Getter Int
 selectionStart = getter HInput.selectionStart HTextArea.selectionStart
 
 -- | Set the index of the start of the selection.
-setSelectionStart :: forall eff. Int -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
+setSelectionStart :: Setter Int
 setSelectionStart = setter HInput.setSelectionStart HTextArea.setSelectionStart
 
 -- | Get the index of the end of the selection.
-selectionEnd :: forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) Int
+selectionEnd :: Getter Int
 selectionEnd = getter HInput.selectionEnd HTextArea.selectionEnd
 
 -- | Set the index of the end of the selection.
-setSelectionEnd :: forall eff. Int -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
+setSelectionEnd :: Setter Int
 setSelectionEnd = setter HInput.setSelectionEnd HTextArea.setSelectionEnd
+
+-- | Get the direction of the selection.
+selectionDirection :: Getter Direction
+selectionDirection =
+  getter HInput.selectionDirection HTextArea.selectionDirection
+    >>> map case _ of
+      "forward" -> Forward
+      "backward" -> Backward
+      _ -> None
+
+-- | Set the direction of the selection
+setSelectionDirection :: Setter Direction
+setSelectionDirection = show >>>
+  setter HInput.setSelectionDirection HTextArea.setSelectionDirection

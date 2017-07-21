@@ -29,6 +29,7 @@ import DOM.Util.TextCursor.Element.HTML
     ( value, setValue
     , selectionStart, setSelectionStart
     , selectionEnd, setSelectionEnd
+    , selectionDirection, setSelectionDirection
     )
 
 -- | Helper to split a `String` at a specific position without worrying about
@@ -45,23 +46,26 @@ textCursor element = do
     val <- value element
     start <- selectionStart element
     end <- selectionEnd element
+    direction <- selectionDirection element
     let { before: prior, after } = splitAtRec end val
     let { before, after: selected } = splitAtRec start prior
     pure $ TextCursor
         { before
         , selected
         , after
+        , direction
         }
 
 -- | Set the `TextCursor` on a `TextCursorElement`. Calls `setValue`,
 -- | `setSelectionStart`, and `setSelectionEnd`.
 setTextCursor :: forall eff. TextCursor -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
-setTextCursor (tc@TextCursor { before, selected, after }) element = do
+setTextCursor (tc@TextCursor { before, selected, after, direction }) element = do
     setValue (content tc) element
     let start = length before
     let end = start + length selected
     setSelectionStart start element
     setSelectionEnd end element
+    setSelectionDirection direction element
 
 -- | Modifies the `TextCursor` on an element through the given endomorphism.
 modifyTextCursor :: forall eff. (TextCursor -> TextCursor) -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
