@@ -1,11 +1,11 @@
 {
   "name": "purescript-textcursor",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "output"
+  "description": "TextCursor type and functions for <input>/<textarea> selections",
+  "homepage": "https://github.com/MonoidMusician/purescript-textcursor",
+  "authors": [
+    "Nicholas Scheel <monoidmusician@gmail.com>"
   ],
+  "license": "MIT",
   "dependencies": {
     "purescript-prelude": "^3.0.0",
     "purescript-newtype": "^2.0.0",
@@ -16,5 +16,11 @@
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
     "purescript-quickcheck": "^4.4.0"
-  }
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ]
 }
