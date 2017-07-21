@@ -1,4 +1,4 @@
-module DOM.Util.TextCursor.Test.Properties where
+module Test.Main where
 
 import DOM.Util.TextCursor
 
@@ -13,19 +13,19 @@ type Testing = Array (TextCursor -> Result)
 
 test_idempotent :: Testing
 test_idempotent = cases <#> prop where
-    cases = [selectAll, moveCursorToStart, moveCursorToEnd]
+    cases = [selectAll, placeCursorAtStart, placeCursorAtEnd]
     prop fn tc = fn tc === fn (fn tc)
 
 test_contentPreserving :: Testing
 test_contentPreserving = cases <#> prop where
-    cases = [selectAll, moveCursorToStart, moveCursorToEnd]
+    cases = [selectAll, placeCursorAtStart, placeCursorAtEnd]
     prop fn tc = content tc === content (fn tc)
 
 test_resultPred :: Testing
 test_resultPred = cases <#> prop where
     cases =
-        [ { fn: moveCursorToStart, pred: cursorAtStart }
-        , { fn: moveCursorToEnd, pred: cursorAtEnd }
+        [ { fn: placeCursorAtStart, pred: cursorAtStart }
+        , { fn: placeCursorAtEnd, pred: cursorAtEnd }
         , { fn: selectAll, pred: allSelected }
         ]
     prop { fn, pred } tc = pred (fn tc) <?> "Predicate failed on function result"

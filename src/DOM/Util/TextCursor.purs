@@ -2,11 +2,11 @@ module DOM.Util.TextCursor
     ( TextCursor(..)
     , mkTextCursor, genTextCursor
     , content, length, null, empty, single
-    , _before, _selected, _after, _all
+    , _before, _selected, _after, _all, _nonselected
     , atStart, atEnd, allSelected
     , isCursor, cursorAtStart, cursorAtEnd
     , isSelection, selectionAtStart, selectionAtEnd
-    , selectAll, moveCursorToStart, moveCursorToEnd
+    , selectAll, placeCursorAtStart, placeCursorAtEnd
     , modifySelected, modifyAll
     , appendl, appendr, insert
     ) where
@@ -124,6 +124,10 @@ _all :: Traversal' TextCursor String
 _all = wander \f (TextCursor { before, selected, after }) ->
     mkTextCursor <$> f before <*> f selected <*> f after
 
+_nonselected :: Traversal' TextCursor String
+_nonselected = wander \f (TextCursor { before, selected, after }) ->
+    mkTextCursor <$> f before <*> pure selected <*> f after
+
 -- | Test whether the cursor or selection touches the start.
 atStart :: TextCursor -> Boolean
 atStart = testContent { before: Null, selected: Null, after: Any }
@@ -171,20 +175,21 @@ selectAll tc = TextCursor
     , after: ""
     }
 
--- | Move the cursor to the start of a field, preserving the overall text
+-- | Place the cursor to the start of a field, preserving the overall text
 -- | content.
 -- Content-preserving idempotent endomorphism
-moveCursorToStart :: TextCursor -> TextCursor
-moveCursorToStart tc = TextCursor
+placeCursorAtStart :: TextCursor -> TextCursor
+placeCursorAtStart tc = TextCursor
     { before: ""
     , selected: ""
     , after: content tc
     }
 
--- | Move the cursor to the end of a field, preserving the overall text content.
+-- | Place the cursor to the end of a field, preserving the overall text
+-- | content.
 -- Content-preserving idempotent endomorphism
-moveCursorToEnd :: TextCursor -> TextCursor
-moveCursorToEnd tc = TextCursor
+placeCursorAtEnd :: TextCursor -> TextCursor
+placeCursorAtEnd tc = TextCursor
     { before: content tc
     , selected: ""
     , after: ""
@@ -193,6 +198,10 @@ moveCursorToEnd tc = TextCursor
 -- | Modify just the selected region with an endomorphism.
 modifySelected :: (String -> String) -> TextCursor -> TextCursor
 modifySelected = over _selected
+
+-- | Modify the non-selected regions with an endomorphism.
+modifyNonselected :: (String -> String) -> TextCursor -> TextCursor
+modifyNonselected = over _nonselected
 
 -- | Map all three regions of the `TextCursor` with an endomorphism, performing
 -- | a replacement or other transformation such as normalization.

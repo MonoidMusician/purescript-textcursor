@@ -27,7 +27,7 @@ tc = TextCursor
   , selected: "World"
   , after: "! Hi!"
   }
-tcreplaced = over _all replacement tc
+tcreplaced = modifyAll replacement tc
 content tcreplaced == replacement (content tc)
 ```
 
