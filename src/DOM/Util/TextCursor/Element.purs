@@ -57,7 +57,8 @@ textCursor element = do
     }
 
 -- | Set the `TextCursor` on a `TextCursorElement`. Calls `setValue`,
--- | `setSelectionStart`, and `setSelectionEnd`.
+-- | `setSelectionStart`, `setSelectionEnd`, and `setSelectionDirection` to
+-- | ensure a consistent state for the field.
 setTextCursor :: forall eff. TextCursor -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
 setTextCursor (tc@TextCursor { before, selected, after, direction }) element = do
   setValue (content tc) element
