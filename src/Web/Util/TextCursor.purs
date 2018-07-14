@@ -1,4 +1,4 @@
-module DOM.Util.TextCursor
+module Web.Util.TextCursor
   ( TextCursor(..), Direction(..)
   , mkTextCursor, genTextCursor
   , content, length, null, empty, single
@@ -19,7 +19,6 @@ import Data.Lens (Lens', Traversal', over, wander, (.~), (^.))
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.Lens.Types (Setter')
-import Data.Monoid (class Monoid)
 import Data.Newtype (class Newtype)
 import Data.String (length, null) as S
 import Data.String.Gen (genUnicodeString)
@@ -32,7 +31,7 @@ derive instance eqDirection :: Eq Direction
 derive instance ordDirection :: Ord Direction
 
 instance semigroupDirection :: Semigroup Direction where
-  append None = id
+  append None = identity
   append c = const c
 instance monoidDirection :: Monoid Direction where
   mempty = None

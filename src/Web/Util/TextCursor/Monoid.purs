@@ -1,12 +1,11 @@
-module DOM.Util.TextCursor.Monoid where
+module Web.Util.TextCursor.Monoid where
 
 import Prelude
-import DOM.Util.TextCursor
+import Web.Util.TextCursor
   ( TextCursor, empty
   , appendl, appendr
   , isCursor, content
   )
-import Data.Monoid (class Monoid)
 import Data.Newtype (class Newtype)
 
 newtype Leftmost = Leftmost TextCursor

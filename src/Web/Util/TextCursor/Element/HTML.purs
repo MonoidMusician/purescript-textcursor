@@ -1,4 +1,4 @@
-module DOM.Util.TextCursor.Element.HTML
+module Web.Util.TextCursor.Element.HTML
   ( value, setValue
   , selectionStart, setSelectionStart
   , selectionEnd, setSelectionEnd
@@ -7,18 +7,15 @@ module DOM.Util.TextCursor.Element.HTML
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import DOM (DOM)
-import DOM.HTML.HTMLInputElement as HInput
-import DOM.HTML.HTMLTextAreaElement as HTextArea
-import DOM.HTML.Types (HTMLInputElement, HTMLTextAreaElement)
-import DOM.Util.TextCursor (Direction(..))
-import DOM.Util.TextCursor.Element.Type (TextCursorElement(TextArea, Input))
+import Effect (Effect)
+import Web.HTML.HTMLInputElement as HInput
+import Web.HTML.HTMLTextAreaElement as HTextArea
+import Web.HTML (HTMLInputElement, HTMLTextAreaElement)
+import Web.Util.TextCursor (Direction(..))
+import Web.Util.TextCursor.Element.Type (TextCursorElement(TextArea, Input))
 
-type Getter a =
-  forall eff. TextCursorElement -> Eff ( dom :: DOM | eff ) a
-type Setter a =
-  forall eff. a -> TextCursorElement -> Eff ( dom :: DOM | eff ) Unit
+type Getter a = TextCursorElement -> Effect a
+type Setter a = a -> TextCursorElement -> Effect Unit
 
 -- | Lift a pair of getters (Input/TextArea).
 getter ::

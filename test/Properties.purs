@@ -1,12 +1,13 @@
 module Test.Main where
 
-import DOM.Util.TextCursor
+import Web.Util.TextCursor
 
 import Data.Array (concat)
 import Data.String as S
 import Data.Traversable (for_)
+import Effect (Effect)
 import Prelude (Unit, discard, flip, map, ($), (+), (<#>), (<$>), (>>=), (>>>))
-import Test.QuickCheck (QC, Result, arbitrary, quickCheck, (<?>), (===))
+import Test.QuickCheck (Result, arbitrary, quickCheck, (<?>), (===))
 import Test.QuickCheck.Gen (Gen)
 
 type Testing = Array (TextCursor -> Result)
@@ -43,10 +44,10 @@ test_concat = cases <#> prop where
 testTCG :: (TextCursor -> Result) -> Gen Result
 testTCG f = map f genTextCursor
 
-testTC :: (TextCursor -> Result) -> QC () Unit
+testTC :: (TextCursor -> Result) -> Effect Unit
 testTC = testTCG >>> quickCheck
 
-main :: QC () Unit
+main :: Effect Unit
 main = do
   let tests = concat [test_idempotent, test_contentPreserving, test_resultPred]
   for_ tests testTC
