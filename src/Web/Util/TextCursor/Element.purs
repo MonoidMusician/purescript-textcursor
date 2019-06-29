@@ -49,7 +49,7 @@ textCursor element = do
 -- | `setSelectionStart`, `setSelectionEnd`, and `setSelectionDirection` to
 -- | ensure a consistent state for the field.
 setTextCursor :: TextCursor -> TextCursorElement -> Effect Unit
-setTextCursor (tc@TextCursor { before, selected, after, direction }) element = do
+setTextCursor tc@(TextCursor { before, selected, after, direction }) element = do
   setValue (content tc) element
   let start = length before
   let end = start + length selected

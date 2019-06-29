@@ -68,7 +68,7 @@ instance showTextCursor :: Show TextCursor where
     TextCursor { before, selected: "", after } ->
       "«" <> before <> "|" <> after <> "»"
     TextCursor { before, selected, after } ->
-      "«" <> before <> "\27[4m" <> selected <> "\27[24m" <> after <> "»"
+      "«" <> before <> "[|" <> selected <> "|]" <> after <> "»"
 
 genTextCursor :: forall m. MonadRec m => MonadGen m => m TextCursor
 genTextCursor =
