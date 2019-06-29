@@ -14,7 +14,7 @@
     "purescript-prelude": "^4.0.0",
     "purescript-newtype": "^3.0.0",
     "purescript-profunctor-lenses": "^4.0.0",
-    "purescript-web-uievents": "^1.0.0"
+    "purescript-web-uievents": "^2.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",
